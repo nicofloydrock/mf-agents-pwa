@@ -44,18 +44,25 @@ export function useChat() {
 
     try {
       const data = await translateText(text, tunnelId);
+      const isFallback = data.translated?.startsWith("[fallback]");
+      const translatedText = isFallback ? text : data.translated;
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === pendingAgent.id
             ? {
                 ...m,
-                text: `Traducción (${data.lang.toUpperCase()}): ${data.translated}`,
-                status: "sent",
-                translated: data.translated,
+                text: `Traducción (${data.lang.toUpperCase()}): ${translatedText}`,
+                status: isFallback ? "error" : "sent",
+                translated: translatedText,
               }
             : m,
         ),
       );
+
+      if (isFallback) {
+        setError("Traducción no disponible (fallback de API).");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

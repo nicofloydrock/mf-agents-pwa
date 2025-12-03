@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { HostConfig } from "./types/hostConfig";
+import { translateText } from "./api/translate";
+import { createId } from "./utils/id";
 
 type Message = {
   id: string;
@@ -9,23 +11,6 @@ type Message = {
   status?: "pending" | "sent" | "error";
   createdAt: number;
 };
-
-const randomId = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `id-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
-};
-
-const resolveApiBase = () => {
-  if (import.meta.env.VITE_API_MOCK_URL) return import.meta.env.VITE_API_MOCK_URL;
-  if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:5050`;
-  }
-  return "http://localhost:5050";
-};
-
-const API_BASE = resolveApiBase();
 
 type AppProps = {
   config?: HostConfig;
@@ -46,8 +31,9 @@ export default function App({ config }: AppProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
-  const tunnelId = useMemo(() => randomId(), []);
+  const [tunnelId, setTunnelId] = useState(() => createId());
   const userName = config?.user?.name ?? "Operador";
+  const [showDelayNotice, setShowDelayNotice] = useState(false);
 
   useEffect(() => {
     const el = chatRef.current;
@@ -74,18 +60,7 @@ export default function App({ config }: AppProps) {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/translate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tunnel-id": tunnelId,
-        },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) {
-        throw new Error(`API ${res.status}: ${res.statusText}`);
-      }
-      const data = (await res.json()) as { translated: string; lang: string };
+      const data = await translateText(text, tunnelId);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === pendingAgent.id
@@ -124,6 +99,22 @@ export default function App({ config }: AppProps) {
     if (busy) return;
     const text = "Mensaje de voz simulado desde operador";
     void sendMessage(text);
+  };
+
+  const handleNewTunnel = () => {
+    setTunnelId(createId());
+  };
+
+  const notifyDelayed = () => {
+    if (!config?.notify) return;
+    setShowDelayNotice(true);
+    setTimeout(() => {
+      config.notify?.("Notificación diferida desde MF Agente", {
+        title: "Agente (delay)",
+        target: "agente",
+      });
+      setShowDelayNotice(false);
+    }, 10000);
   };
 
   return (
@@ -181,10 +172,19 @@ export default function App({ config }: AppProps) {
               </button>
               <button
                 className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200 transition hover:border-white/40"
-                onClick={() => window.location.reload()}
+                onClick={handleNewTunnel}
               >
                 Nuevo túnel
               </button>
+              {config?.notify && (
+                <button
+                  className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200 transition hover:border-white/40 disabled:opacity-60"
+                  onClick={notifyDelayed}
+                  disabled={showDelayNotice}
+                >
+                  {showDelayNotice ? "Enviando en 10s..." : "Notificar +10s"}
+                </button>
+              )}
             </div>
           </div>
 

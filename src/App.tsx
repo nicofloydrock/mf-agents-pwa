@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { HostConfig } from "./types/hostConfig";
 
 type Message = {
   id: string;
@@ -13,7 +14,6 @@ const randomId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
-  // Fallback para entornos sin crypto.randomUUID (algunos navegadores legacy)
   return `id-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
 };
 
@@ -27,14 +27,27 @@ const resolveApiBase = () => {
 
 const API_BASE = resolveApiBase();
 
-export default function App() {
+type AppProps = {
+  config?: HostConfig;
+};
+
+export default function App({ config }: AppProps) {
+  const valid = config?.token === "NICORIVERA";
+  if (!valid) {
+    return (
+      <div className="min-h-screen bg-slate-950 px-4 py-6 text-center text-slate-200 sm:px-8">
+        Config no recibida o token inválido.
+      </div>
+    );
+  }
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
-
   const tunnelId = useMemo(() => randomId(), []);
+  const userName = config?.user?.name ?? "Operador";
 
   useEffect(() => {
     const el = chatRef.current;
@@ -114,65 +127,51 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-6 sm:px-8">
-      <header className="glass mx-auto flex max-w-4xl items-center justify-between rounded-2xl px-4 py-4 shadow-glow sm:px-6">
+    <div className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 sm:px-6 lg:px-10">
+      <header className="glass mx-auto flex max-w-5xl flex-col gap-2 rounded-2xl px-4 py-4 shadow-glow sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
             Microfront Agente
           </p>
           <h1 className="text-2xl font-semibold text-white">
-            Chat de operador con traducción
+            Chat traducido en vivo
           </h1>
-          <p className="text-sm text-slate-300">
-            Cada sesión crea un túnel lógico (ID: <code>{tunnelId}</code>) para
-            agrupar mensajes.
+          <p className="text-xs text-slate-400">
+            Sesión: {userName} · Túnel: {tunnelId}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">
             remote: agente
           </span>
           <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">
             expose: App
           </span>
+          {config?.notify && (
+            <button
+              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-[11px] transition hover:-translate-y-0.5 hover:border-white/40"
+              onClick={() =>
+                config.notify?.("Alerta desde MF Agente hacia el host.")
+              }
+            >
+              Alertar host
+            </button>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto mt-6 max-w-4xl space-y-4">
-        <section className="glass rounded-2xl border border-white/10 p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                Canal seguro
-              </p>
-              <h2 className="text-xl font-semibold text-white">
-                Túnel efímero para la sesión
-              </h2>
-              <p className="text-sm text-slate-300">
-                Se usa <code className="rounded bg-white/10 px-2 py-1">x-tunnel-id</code>{" "}
-                por request para aislar mensajes.
-              </p>
-            </div>
-            <button
-              className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200 transition hover:border-white/40"
-              onClick={() => window.location.reload()}
-            >
-              Regenerar túnel
-            </button>
-          </div>
-        </section>
-
-        <section className="glass rounded-2xl border border-white/10 p-5">
+      <main className="mx-auto mt-6 flex max-w-5xl flex-col gap-4">
+        <section className="glass rounded-2xl border border-white/10 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                 Mensajería
               </p>
               <h2 className="text-xl font-semibold text-white">
-                Enviar texto o voz (mock)
+                Chat minimal (texto/voz mock)
               </h2>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 shadow transition hover:-translate-y-0.5"
                 onClick={handleVoiceMock}
@@ -180,17 +179,23 @@ export default function App() {
               >
                 Simular voz
               </button>
+              <button
+                className="rounded-lg border border-white/20 px-3 py-2 text-xs text-slate-200 transition hover:border-white/40"
+                onClick={() => window.location.reload()}
+              >
+                Nuevo túnel
+              </button>
             </div>
           </div>
 
           <div className="mt-4 grid gap-3">
             <div
               ref={chatRef}
-              className="h-72 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3"
+              className="h-[60vh] min-h-[320px] overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3"
             >
               {messages.length === 0 && (
                 <p className="text-sm text-slate-300">
-                  Envía un mensaje para iniciar la sesión.
+                  Envía un mensaje para iniciar el chat.
                 </p>
               )}
               <div className="space-y-2">
@@ -204,7 +209,7 @@ export default function App() {
                     }`}
                   >
                     <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-slate-300">
-                      <span>{msg.role === "user" ? "Operador" : "Agente"}</span>
+                      <span>{msg.role === "user" ? userName : "Agente"}</span>
                       <span>
                         {msg.status === "pending"
                           ? "procesando"

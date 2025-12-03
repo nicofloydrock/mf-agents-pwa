@@ -12,6 +12,7 @@ type AppProps = {
 };
 
 export default function App({ config }: AppProps) {
+  
   const valid = config?.token === "NICORIVERA";
   const [tunnelId, setTunnelId] = useState(() => createId());
   const userName = config?.user?.name ?? "Operador";

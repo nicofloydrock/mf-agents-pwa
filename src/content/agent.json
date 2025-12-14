@@ -1,0 +1,44 @@
+{
+  "app": {
+    "invalidConfig": "Config no recibida o token inválido.",
+    "anonymousUser": "Operador"
+  },
+  "header": {
+    "microfrontLabel": "Microfront Agente",
+    "title": "Chat traducido en vivo",
+    "sessionLabel": "Sesión",
+    "tunnelLabel": "Túnel",
+    "remoteLabel": "remote",
+    "moduleLabel": "expose",
+    "notifyCta": "Alertar host",
+    "notifyBody": "Alerta desde MF Agente hacia el host."
+  },
+  "chat": {
+    "section": "Mensajería",
+    "title": "Chat minimal (texto/voz mock)",
+    "sessionPrefix": "Sesión",
+    "placeholder": "Escribe un mensaje para traducir...",
+    "send": "Enviar",
+    "sending": "Enviando...",
+    "voice": "Simular voz",
+    "newTunnel": "Nuevo túnel",
+    "delayNotify": "Notificar +10s",
+    "delaySending": "Enviando en 10s...",
+    "empty": "Envía un mensaje para iniciar el chat.",
+    "status": {
+      "pending": "procesando",
+      "error": "error",
+      "ok": "ok"
+    },
+    "agentLabel": "Agente",
+    "translationLabel": "Traducción"
+  },
+  "tester": {
+    "title": "Config de prueba",
+    "description": "Pega un objeto JSON con token/usuario para probar agente en modo standalone.",
+    "placeholder": "{\n  \"token\": \"NICORIVERA\",\n  \"user\": { \"id\": \"operator-1\", \"name\": \"Operador Demo\" }\n}",
+    "applyCta": "Usar config",
+    "demoCta": "Cargar demo",
+    "errorInvalid": "JSON inválido, revisa el formato."
+  }
+}

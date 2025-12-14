@@ -1,3 +1,4 @@
+// Hook que gestiona mensajes del chat, traducción y estados de envío.
 import { useEffect, useRef, useState } from "react";
 import { translateText } from "../api/translate";
 import { createId } from "../utils/id";
@@ -23,6 +24,7 @@ export function useChat() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  // Envía mensaje, añade placeholders y actualiza traducción.
   const send = async (text: string, tunnelId: string) => {
     const userMsg: Message = {
       id: createId(),

@@ -1,3 +1,4 @@
+// Cliente para traducir mensajes en el mock (envía tunnel-id para trazar).
 import { resolveApiBase } from "../utils/env";
 
 const API_BASE = resolveApiBase();

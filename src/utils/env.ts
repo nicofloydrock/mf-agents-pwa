@@ -1,3 +1,4 @@
+// Resuelve base URL del API mock priorizando env; fallback a host local 5050.
 export const resolveApiBase = () => {
   if (import.meta.env.VITE_API_MOCK_URL) return import.meta.env.VITE_API_MOCK_URL;
   if (typeof window !== "undefined") {
